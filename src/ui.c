@@ -348,14 +348,18 @@ static void create_and_attach_modules(Config *config, UI *ui)
     for(guint i=0;i<config->len_of_modules;i++){
         Module *module = config->modules[i];
 
-        /*EventWrapper*/
-        ui->modules[i] = gtk_event_box_new();
+        /*ModuleWindow*/
+        ui->modules[i] = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
         gtk_widget_set_name(ui->modules[i],module->name);
-        gtk_widget_set_events(ui->modules[i],GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+
+        /*EventWrapper*/
+        GtkWidget *event_box = gtk_event_box_new();
+        gtk_widget_set_events(event_box,GDK_BUTTON_PRESS_MASK | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK);
+        gtk_container_add(GTK_CONTAINER(ui->modules[i]),event_box);
 
         /*ModuleBox*/
         GtkWidget *module_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
-        gtk_container_add(GTK_CONTAINER(ui->modules[i]),module_box);
+        gtk_container_add(GTK_CONTAINER(event_box),module_box);
         
         /*Label*/
         GtkWidget *label = GTK_WIDGET(gtk_label_new(module->text));
@@ -379,9 +383,9 @@ static void create_and_attach_modules(Config *config, UI *ui)
             g_timeout_add_seconds(module->refresh,(GSourceFunc)set_module_label,callback);
 
         if(module->click_exec!=NULL){
-            g_signal_connect(ui->modules[i],"button_press_event",G_CALLBACK(module_click_handler),module);
-            g_signal_connect(ui->modules[i],"enter-notify-event",G_CALLBACK(module_hover),(gboolean*) TRUE);
-            g_signal_connect(ui->modules[i],"leave-notify-event",G_CALLBACK(module_hover),(gboolean*) FALSE);
+            g_signal_connect(event_box,"button_press_event",G_CALLBACK(module_click_handler),module);
+            g_signal_connect(event_box,"enter-notify-event",G_CALLBACK(module_hover),(gboolean*) TRUE);
+            g_signal_connect(event_box,"leave-notify-event",G_CALLBACK(module_hover),(gboolean*) FALSE);
         }
 
         g_signal_connect(ui->modules[i],"show",G_CALLBACK(place_module_window),callback);

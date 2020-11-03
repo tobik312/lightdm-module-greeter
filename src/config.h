@@ -4,8 +4,10 @@
 #include <gdk/gdk.h>
 #include <glib.h>
 
+#include "module.h"
+
 #ifndef CONFIG_FILE
-#define CONFIG_FILE "/etc/lightdm/lightdm-mini-greeter.conf"
+#define CONFIG_FILE "/etc/lightdm/lightdm-module-greeter.conf"
 #endif
 
 
@@ -29,6 +31,7 @@ typedef struct Config_ {
     GdkRGBA  *error_color;
     // Windows
     gchar    *background_image;
+    gchar    *background_mode;
     GdkRGBA  *background_color;
     GdkRGBA  *window_color;
     GdkRGBA  *border_color;
@@ -46,6 +49,10 @@ typedef struct Config_ {
     guint     restart_key;
     guint     hibernate_key;
     guint     suspend_key;
+
+    /* Modules */
+    guint     len_of_modules;
+    Module   **modules;
 } Config;
 
 

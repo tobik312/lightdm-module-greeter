@@ -41,8 +41,7 @@ void authentication_complete_cb(LightDMGreeter *greeter, App *app)
            if (!gtk_widget_get_visible(APP_FEEDBACK_LABEL(app))) {
                 gtk_widget_show(APP_FEEDBACK_LABEL(app));
             }
-            gtk_label_set_text(GTK_LABEL(APP_FEEDBACK_LABEL(app)),
-                               app->config->invalid_password_text);
+            gtk_label_set_text(GTK_LABEL(APP_FEEDBACK_LABEL(app)),app->config->invalid_password_text);
         }
         begin_authentication_as_default_user(app);
     }
@@ -86,7 +85,7 @@ void handle_password(GtkWidget *password_input, App *app)
 }
 
 
-/* Select the Password input if the Tab Key is Pressed */
+/* Select the Password input if the Tab Key is Pressed *
 gboolean handle_tab_key(GtkWidget *widget, GdkEvent *event, App *app)
 {
     (void) widget;  // Window accessible through app.
@@ -99,9 +98,10 @@ gboolean handle_tab_key(GtkWidget *widget, GdkEvent *event, App *app)
         return FALSE;
     }
     return TRUE;
-}
+}*/
 
-/* Shutdown, Restart, Hibernate or Suspend if the correct keys are pressed */
+
+/* Shutdown, Restart, Hibernate or Suspend if the correct keys are pressed *
 gboolean handle_power_management_keys(GtkWidget *widget, GdkEventKey *event,
                                       Config *config)
 {
@@ -126,4 +126,4 @@ gboolean handle_power_management_keys(GtkWidget *widget, GdkEventKey *event,
     }
 
     return FALSE;
-}
+}*/

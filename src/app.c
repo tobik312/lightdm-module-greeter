@@ -34,13 +34,13 @@ App *initialize_app(int argc, char **argv)
     // This was added to fix a bug where the background window would be focused
     // instead of the main window, preventing users from entering their password.
     // It's undocument & probably not necessary any more. Investigate & remove.
-    for (int m = 0; m < APP_MONITOR_COUNT(app); m++) {
+    /*for (int m = 0; m < APP_MONITOR_COUNT(app); m++) {
         g_signal_connect(GTK_WIDGET(APP_BACKGROUND_WINDOWS(app)[m]),
                          "key-press-event",
                          G_CALLBACK(handle_tab_key), app);
     }
     g_signal_connect(GTK_WIDGET(APP_MAIN_WINDOW(app)), "key-press-event",
-                     G_CALLBACK(handle_power_management_keys), app->config);
+                     G_CALLBACK(handle_power_management_keys), app->config);*/
 
     return app;
 }

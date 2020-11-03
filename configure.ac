@@ -2,9 +2,10 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([lightdm-mini-greeter], [0.4.0], [http://github.com/prikhi])
+AC_INIT([lightdm-module-greeter], [0.1.0], [http://github.com/tobik312])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([defines.h])
+
 
 # Checks for programs.
 AC_PROG_CC

@@ -7,13 +7,17 @@
 
 #include "config.h"
 #include "utils.h"
+#include "module.h"
 
 
 static gchar *parse_greeter_string(GKeyFile *keyfile, const char *group_name,
                                    const char *key_name, const gchar *fallback);
 static gint parse_greeter_integer(GKeyFile *keyfile, const char *group_name,
                                   const char *key_name, const gint fallback);
-static GdkRGBA *parse_greeter_color_key(GKeyFile *keyfile, const char *key_name);
+static GdkRGBA *parse_greeter_color_key(GKeyFile *keyfile,const char *group_name,
+                                  const char *key_name,const gchar *fallback);
+static GdkRGBA *parse_greeter_color_key2(GKeyFile *keyfile,const char *group_name,
+                                  const char *key_name,const GdkRGBA *fallback);
 static guint parse_greeter_hotkey_keyval(GKeyFile *keyfile, const char *key_name);
 static gboolean parse_greeter_password_alignment(GKeyFile *keyfile);
 static gboolean is_rtl_keymap_layout(void);
@@ -87,29 +91,31 @@ Config *initialize_config(void)
     config->font_style =
         parse_greeter_string(keyfile, "greeter-theme", "font-style", "normal");
     config->text_color =
-        parse_greeter_color_key(keyfile, "text-color");
+        parse_greeter_color_key(keyfile,"greeter-theme", "text-color","#000000");
     config->error_color =
-        parse_greeter_color_key(keyfile, "error-color");
+        parse_greeter_color_key(keyfile,"greeter-theme", "error-color","#FF0000");
     // Background
     config->background_image =
         g_key_file_get_string(keyfile, "greeter-theme", "background-image", NULL);
     if (config->background_image == NULL || strcmp(config->background_image, "") == 0) {
         config->background_image = (gchar *) "\"\"";
     }
+    config->background_mode = 
+        parse_greeter_string(keyfile,"greeter-theme","background-mode","auto");
     config->background_color =
-        parse_greeter_color_key(keyfile, "background-color");
+        parse_greeter_color_key(keyfile,"greeter-theme" ,"background-color","#FFFFFF");
     // Window
     config->window_color =
-        parse_greeter_color_key(keyfile, "window-color");
+        parse_greeter_color_key(keyfile,"greeter-theme" ,"window-color","#AAAAAA");
     config->border_color =
-        parse_greeter_color_key(keyfile, "border-color");
+        parse_greeter_color_key(keyfile,"greeter-theme" ,"border-color","#BBBBBB");
     config->border_width = g_key_file_get_string(
         keyfile, "greeter-theme", "border-width", NULL);
     // Password
     config->password_color =
-        parse_greeter_color_key(keyfile, "password-color");
+        parse_greeter_color_key(keyfile,"greeter-theme","password-color","#AAAAAA");
     config->password_background_color =
-        parse_greeter_color_key(keyfile, "password-background-color");
+        parse_greeter_color_key(keyfile,"greeter-theme","password-background-color","#CCCCCC");
     gchar *temp_password_border_color = g_key_file_get_string(
         keyfile, "greeter-theme", "password-border-color", NULL);
     if (temp_password_border_color == NULL) {
@@ -117,7 +123,7 @@ Config *initialize_config(void)
     } else {
         free(temp_password_border_color);
         config->password_border_color =
-            parse_greeter_color_key(keyfile, "password-border-color");
+            parse_greeter_color_key(keyfile,"greeter-theme","password-border-color","#BBBBBB");
     }
     config->password_border_width = parse_greeter_string(
         keyfile, "greeter-theme", "password-border-width", config->border_width);
@@ -130,6 +136,76 @@ Config *initialize_config(void)
         config->layout_spacing = (guint) layout_spacing;
     }
 
+    /*Load modules from config*/
+    gchar **group_names;
+    gsize len_of_groups;
+
+    group_names = g_key_file_get_groups(keyfile, &len_of_groups);
+
+    //Calculate number's of modules
+    config->len_of_modules = 0;
+    config->modules = NULL;
+    for(gsize i=0;i<len_of_groups;i++)
+        if(g_str_has_prefix(group_names[i],"module/")) config->len_of_modules++;
+    
+
+    if(config->len_of_modules>0)
+    {
+        config->modules = malloc(sizeof(Module)*config->len_of_modules);
+        if (config->modules==NULL){
+            g_error("Could not allocate memory for Modules");
+        }
+
+        guint actual_module = 0;
+        for(gsize i=0;i<len_of_groups;i++)
+        {
+            if(g_str_has_prefix(group_names[i],"module/")){
+                config->modules[actual_module] = malloc(sizeof(Module));
+                Module *module = config->modules[actual_module];
+                //Name
+                //7 - lenght of prefix
+                module->name =  g_strndup(group_names[i]+7,sizeof(group_names));
+                //Font
+                module->font = parse_greeter_string(keyfile,group_names[i],"font",config->font);
+                module->font_size = parse_greeter_string(keyfile,group_names[i],"font-size",config->font_size);
+                module->font_weight = parse_greeter_string(keyfile,group_names[i], "font-weight",config->font_weight);
+                module->font_style = parse_greeter_string(keyfile,group_names[i],"font-style",config->font_style);
+                //TextColor
+                module->text_color = parse_greeter_color_key2(keyfile,group_names[i],"text-color",config->text_color);
+                //Window
+                module->window_color = parse_greeter_color_key2(keyfile,group_names[i],"window-color",config->window_color);
+                module->border_color = parse_greeter_color_key2(keyfile,group_names[i],"border-color",config->border_color);
+                module->border_width = parse_greeter_string(keyfile,group_names[i],"border-width",NULL);
+                module->layout_spacing = g_key_file_get_integer(keyfile,group_names[i],"layout-space",NULL);
+                //Position
+                gchar *position_x = parse_greeter_string(keyfile,group_names[i],"position-x","left");
+                module->position_x = 0;
+                if(strcmp(position_x,"right")==0)
+                    module->position_x = 1;
+                else if(strcmp(position_x,"center")==0)
+                    module->position_x = 2;
+
+                gchar *position_y = parse_greeter_string(keyfile,group_names[i],"position-y","top");
+                module->position_y = 0;
+                if(strcmp(position_y,"bottom")==0)
+                    module->position_y = 1;
+                else if(strcmp(position_y,"center")==0)
+                    module->position_y = 2;
+                //Offset
+                module->offset_top = parse_greeter_string(keyfile,group_names[i],"offset-top","0px");
+                module->offset_right = parse_greeter_string(keyfile,group_names[i],"offset-right","0px");
+                module->offset_bottom = parse_greeter_string(keyfile,group_names[i],"offset-bottom","0px");
+                module->offset_left = parse_greeter_string(keyfile,group_names[i],"offset-left","0px");
+                //Text
+                module->text = parse_greeter_string(keyfile,group_names[i],"text","");
+                module->exec = parse_greeter_string(keyfile,group_names[i],"exec",NULL);
+                module->click_exec = parse_greeter_string(keyfile,group_names[i],"click-exec",NULL);
+                module->refresh = 0;
+                module->refresh = (guint) g_key_file_get_uint64(keyfile,group_names[i],"refresh",NULL);
+                actual_module++;
+            }
+        }
+    }
 
     g_key_file_free(keyfile);
 
@@ -148,6 +224,7 @@ void destroy_config(Config *config)
     free(config->text_color);
     free(config->error_color);
     free(config->background_image);
+    free(config->background_mode);
     free(config->background_color);
     free(config->window_color);
     free(config->border_color);
@@ -158,6 +235,10 @@ void destroy_config(Config *config)
     free(config->password_background_color);
     free(config->password_border_color);
     free(config->password_border_width);
+
+    for(guint i=0;i<config->len_of_modules;i++)
+        destroy_module(config->modules[i]);
+
     free(config);
 }
 
@@ -184,7 +265,7 @@ static gint parse_greeter_integer(GKeyFile *keyfile, const char *group_name,
 {
     GError *parse_error = NULL;
     gint parse_result = g_key_file_get_integer(
-        keyfile, "greeter", "password-input-width", &parse_error);
+        keyfile, group_name,key_name,&parse_error);
     if (parse_error != NULL) {
         if (parse_error->code == G_KEY_FILE_ERROR_INVALID_VALUE) {
             // Read the value as a string so we can log it
@@ -201,11 +282,18 @@ static gint parse_greeter_integer(GKeyFile *keyfile, const char *group_name,
 }
 
 /* Parse a greeter-colors group key into a newly-allocated GdkRGBA value */
-static GdkRGBA *parse_greeter_color_key(GKeyFile *keyfile, const char *key_name)
+static GdkRGBA *parse_greeter_color_key(GKeyFile *keyfile,const char *group_name,const char *key_name,
+                                        const gchar *fallback)
 {
     gchar *color_string = g_key_file_get_string(
-        keyfile, "greeter-theme", key_name, NULL);
-    if (strstr(color_string, "#") != NULL) {
+        keyfile,group_name, key_name, NULL);
+    if (color_string==NULL) {
+        if(fallback==NULL) return NULL;
+        color_string = (gchar*) fallback;
+    }else if (strcmp(color_string, "transparent")==0) {
+        //Use transparency
+        strcpy(color_string,"rgba(0,0,0,0)");
+    }else if (strstr(color_string, "#") != NULL) {
         // Remove quotations from hex color strings
         remove_char(color_string, '"');
         remove_char(color_string, '\'');
@@ -221,7 +309,16 @@ static GdkRGBA *parse_greeter_color_key(GKeyFile *keyfile, const char *key_name)
 
     return color;
 }
-
+static GdkRGBA *parse_greeter_color_key2(GKeyFile *keyfile,const char *group_name,
+                                  const char *key_name,const GdkRGBA *fallback)
+{
+    GdkRGBA *color = parse_greeter_color_key(keyfile,group_name,key_name,NULL);
+    if(color==NULL){
+        free(color);
+        return (GdkRGBA*) fallback;
+    }
+    return color;
+}
 /* Parse a greeter-hotkeys key into the GDKkeyval of it's first character */
 static guint parse_greeter_hotkey_keyval(GKeyFile *keyfile, const char *key_name)
 {

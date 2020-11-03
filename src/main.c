@@ -19,8 +19,9 @@ int main(int argc, char **argv)
     for (int m = 0; m < APP_MONITOR_COUNT(app); m++) {
         gtk_widget_show_all(GTK_WIDGET(APP_BACKGROUND_WINDOWS(app)[m]));
     }
-    gtk_widget_show_all(GTK_WIDGET(APP_MAIN_WINDOW(app)));
-    gtk_window_present(APP_MAIN_WINDOW(app));
+
+    gtk_widget_grab_focus(APP_PASSWORD_INPUT(app));
+
     gtk_main();
 
     destroy_app(app);

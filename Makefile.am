@@ -9,7 +9,7 @@ AM_CFLAGS = -g -Wall -O3 --std=c11 -Wextra -Werror --std=c11 -pedantic \
 			-Wswitch-enum -Wconversion -Wunreachable-code -Wformat=2  \
 			-Winit-self                                               \
 			-ftrapv -fverbose-asm \
-			-DCONFIG_FILE=\""$(sysconfdir)/lightdm/lightdm-mini-greeter.conf"\"
+			-DCONFIG_FILE=\""$(sysconfdir)/lightdm/lightdm-module-greeter.conf"\"
 
 
 # Packaging
@@ -28,32 +28,39 @@ MAINTAINERCLEANFILES = \
 					install-sh \
 					missing
 
-
 # Data Files
 xgreetersdir = $(datadir)/xgreeters
-dist_xgreeters_DATA = data/lightdm-mini-greeter.desktop
+dist_xgreeters_DATA = data/lightdm-module-greeter.desktop
 
 configdir = $(sysconfdir)/lightdm
-dist_config_DATA = data/lightdm-mini-greeter.conf
+dist_config_DATA = data/lightdm-module-greeter.conf
 
+#AttachExampleScript
+scriptdir = $(sysconfdir)/lightdm/scripts
+dist_script_DATA = data/scripts/example.sh
 
 # Greeter Executable
 greeterdir = $(bindir)
-greeter_PROGRAMS = lightdm-mini-greeter
+greeter_PROGRAMS = lightdm-module-greeter
 
-lightdm_mini_greeter_SOURCES = \
+lightdm_module_greeter_SOURCES = \
 							src/main.c \
 							src/app.c \
 							src/callbacks.c \
 							src/compat.c \
 							src/config.c \
 							src/ui.c \
-							src/utils.c
+							src/utils.c 
 
-lightdm_mini_greeter_CFLAGS = \
+lightdm_module_greeter_CFLAGS = \
 							$(AM_CFLAGS) \
 							$(GTK_CFLAGS) \
 							$(LIGHTDM_CFLAGS)
-lightdm_mini_greeter_LDADD = \
+lightdm_module_greeter_LDADD = \
 							$(GTK_LIBS) \
 							$(LIGHTDM_LIBS)
+
+# Add execute permission to example script
+.PHONY: install
+install: all
+	chmod +x $(sysconfdir)/lightdm/scripts/example.sh

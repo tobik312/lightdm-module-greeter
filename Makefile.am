@@ -61,6 +61,5 @@ lightdm_module_greeter_LDADD = \
 							$(LIGHTDM_LIBS)
 
 # Add execute permission to example script
-.PHONY: install
-install: all
+install-data-hook::
 	chmod +x $(sysconfdir)/lightdm/scripts/example.sh

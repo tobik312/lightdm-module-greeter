@@ -14,6 +14,10 @@ Fork of [lightdm-mini-greeter](https://github.com/prikhi/lightdm-mini-greeter)
 * Refresh every given amount of time 
 * Exec script on click
 
+### Example config - preview
+![Image of long time format](https://github.com/tobik312/lightdm-module-greeter/blob/master/example/preview.png)
+
+
 ### Simple module
 
 ```
